@@ -456,7 +456,7 @@ module Databasedotcom
         end
 
         def fetch_hash hash
-          hash.map{|k,v| k == :string ? v : "#{k} = '#{v}'"}.join(' and ')
+          hash.map{|k,v| k == :string ? v : "#{k} = '#{v}'"}.join(' AND ')
         end
 
         def fetch_select
