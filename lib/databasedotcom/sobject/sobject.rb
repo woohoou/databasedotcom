@@ -240,9 +240,9 @@ module Databasedotcom
 
       # Find the last record. If the +where_expr+ argument is present, it must be the WHERE part of a SOQL query
       def self.last(where_expr=nil)
-        result = self.order('Id ASC')
+        result = self.order('Id DESC')
         result = result.where(where_expr) if where_expr
-        result.limit('1').last
+        result.limit('1').first
       end
 
       #Delegates to Client.upsert with arguments self, +field+, +values+, and +attrs+
@@ -445,10 +445,14 @@ module Databasedotcom
           @klass.client.query(build_query)
         end
 
+        def to_s
+          @klass.client.query(build_query)
+        end
+
         private
 
         def fetch_array array
-          array.join(', ')
+          array.join(',')
         end
 
         def fetch_hash hash
@@ -477,11 +481,11 @@ module Databasedotcom
 
         def build_query
           result = []
-          result << "select #{fetch_select}"
-          result << "from #{@klass.sobject_name}"
-          result << "where #{fetch_where}" if fetch_where.present?
-          result << "order by #{fetch_order}" if fetch_order.present?
-          result << "limit #{@criteria[:limit]}" if fetch_limit.present?
+          result << "SELECT #{fetch_select}"
+          result << "FROM #{@klass.sobject_name}"
+          result << "WHERE #{fetch_where}" if fetch_where.present?
+          result << "ORDER BY #{fetch_order}" if fetch_order.present?
+          result << "LIMIT #{@criteria[:limit]}" if fetch_limit.present?
           result.join(' ')
         end
       end
