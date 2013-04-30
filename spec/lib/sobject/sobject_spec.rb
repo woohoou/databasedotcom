@@ -161,7 +161,7 @@ describe Databasedotcom::Sobject::Sobject do
     describe ".all" do
       it "returns a paginated enumerable containing all instances" do
         @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass").and_return("foo")
-        TestClass.all.should == "foo"
+        TestClass.all.to_s.should == "foo"
       end
     end
 
@@ -306,41 +306,41 @@ describe Databasedotcom::Sobject::Sobject do
         context "with a single attribute" do
           it "constructs and executes a query matching the dynamic attributes" do
             @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass WHERE Name = 'Richard'").and_return(["bar"])
-            TestClass.find_all_by_Name('Richard').should == ["bar"]
+            TestClass.find_all_by_Name('Richard').to_a.should == ["bar"]
           end
 
           it "handles boolean values" do
             @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass WHERE IsDeleted = false").and_return(["bar"])
-            TestClass.find_all_by_IsDeleted(false).should == ["bar"]
+            TestClass.find_all_by_IsDeleted(false).to_a.should == ["bar"]
           end
 
           it "handles numeric values" do
             @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass WHERE Number_Field = 23.4").and_return(["bar"])
-            TestClass.find_all_by_Number_Field(23.4).should == ["bar"]
+            TestClass.find_all_by_Number_Field(23.4).to_a.should == ["bar"]
           end
 
           it "handles date values" do
             today = Date.civil(2011, 04, 02)
             @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass WHERE Date_Field = 2011-04-02").and_return(["bar"])
-            TestClass.find_all_by_Date_Field(today).should == ["bar"]
+            TestClass.find_all_by_Date_Field(today).to_a.should == ["bar"]
           end
 
           it "handles datetime values" do
             now = DateTime.civil(2011, 04, 02, 20, 15, 33)
             @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass WHERE DateTime_Field = 2011-04-02T20:15:33.000+00:00").and_return(["bar"])
-            TestClass.find_all_by_DateTime_Field(now).should == ["bar"]
+            TestClass.find_all_by_DateTime_Field(now).to_a.should == ["bar"]
           end
 
           it "handles time values" do
             now = Time.utc(2011, "apr", 2, 20, 15, 33)
             offs = now.utc.strftime("%z").insert(-3, ":")
             @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass WHERE Time_Field = 2011-04-02T20:15:33.000#{offs}").and_return(["bar"])
-            TestClass.find_all_by_Time_Field(now).should == ["bar"]
+            TestClass.find_all_by_Time_Field(now).to_a.should == ["bar"]
           end
 
           it "escapes special characters" do
             @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass WHERE Name = 'o\\'reilly'").and_return(["bar"])
-            TestClass.find_all_by_Name("o'reilly").should == ["bar"]
+            TestClass.find_all_by_Name("o'reilly").to_a.should == ["bar"]
           end
         end
 
@@ -351,7 +351,7 @@ describe Databasedotcom::Sobject::Sobject do
               query.should include("City = 'San Francisco'")
               ["bar"]
             end
-            TestClass.find_all_by_Name_and_City('Richard', 'San Francisco').should == ["bar"]
+            TestClass.find_all_by_Name_and_City('Richard', 'San Francisco').to_a.should == ["bar"]
           end
         end
       end
