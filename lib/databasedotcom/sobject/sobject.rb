@@ -400,7 +400,7 @@ module Databasedotcom
         end
 
         def all
-          self.select(@klass.field_list, fetch_data: true)
+          @fetch_data = true
           self
         end
 
