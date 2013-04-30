@@ -219,14 +219,6 @@ module Databasedotcom
         self.client.find(self, record_id)
       end
 
-      # Returns all records of type self as instances.
-      #
-      #    client.materialize("Car")
-      #    Car.all    #=>   [#<Car @Id="1", ...>, #<Car @Id="2", ...>, #<Car @Id="3", ...>, ...]
-      def self.all
-        self.select(self.field_list, fetch_data: true)
-      end
-
       # Returns a collection of instances of self that match the conditional +where_expr+, which is the WHERE part of a SOQL query.
       #
       #    client.materialize("Car")
@@ -407,6 +399,11 @@ module Databasedotcom
           self
         end
 
+        def all
+          self.select(@klass.field_list, fetch_data: true)
+          self
+        end
+
         def where *where_clauses
           where_clauses.each do |where_clause|
             case where_clause.class.name
@@ -428,7 +425,7 @@ module Databasedotcom
         end
 
         def limit limit
-          @criteria[:limit] = limit if limit.kind_of? String
+          @criteria[:limit] = limit.to_s if limit.kind_of?(String) || limit.kind_of?(Integer)
           self
         end
 
