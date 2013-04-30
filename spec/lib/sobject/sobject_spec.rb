@@ -172,6 +172,64 @@ describe Databasedotcom::Sobject::Sobject do
       end
     end
 
+    describe ".select" do
+      it "constructs and submits a SOQL query with method select(array)" do
+        fields = ['Name','Description']
+        @client.should_receive(:query).with("SELECT #{fields.join(',')} FROM TestClass").and_return("bar")
+        TestClass.select(fields).to_s.should == "bar"
+      end
+    end
+
+    describe ".select" do
+      it "constructs and submits a SOQL query with method select(args)" do
+        fields = ['Name','Description']
+        @client.should_receive(:query).with("SELECT #{fields.join(',')} FROM TestClass").and_return("bar")
+        TestClass.select('Name','Description').to_s.should == "bar"
+      end
+    end
+
+    describe ".where" do
+      it "constructs and submits a SOQL query with method where(hash)" do
+        @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass WHERE Name = 'foo' AND Description = '1'").and_return("bar")
+        TestClass.where(Name: 'foo', Description: '1').to_s.should == "bar"
+      end
+    end
+
+    describe ".where" do
+      it "constructs and submits a SOQL query with method where(args)" do
+        @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass WHERE Name = 'foo' AND Description = '1'").and_return("bar")
+        TestClass.where("Name = 'foo' AND Description = '1'").to_s.should == "bar"
+      end
+    end
+
+    describe ".order" do
+      it "constructs and submits a SOQL query with method order(array)" do
+        @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass ORDER BY Id DESC,Name ASC").and_return("bar")
+        TestClass.order(['Id DESC','Name ASC']).to_s.should == "bar"
+      end
+    end
+
+    describe ".order" do
+      it "constructs and submits a SOQL query with method order(args)" do
+        @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass ORDER BY Id DESC,Name ASC").and_return("bar")
+        TestClass.order('Id DESC','Name ASC').to_s.should == "bar"
+      end
+    end
+
+    describe ".limit" do
+      it "constructs and submits a SOQL query with method limit(integer)" do
+        @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass LIMIT 1").and_return("bar")
+        TestClass.limit(1).to_s.should == "bar"
+      end
+    end
+
+    describe ".limit" do
+      it "constructs and submits a SOQL query with method limit(string)" do
+        @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass LIMIT 1").and_return("bar")
+        TestClass.limit('1').to_s.should == "bar"
+      end
+    end
+
     describe ".delete" do
       it "deletes a record specified by id" do
         @client.should_receive(:delete).with("TestClass", "recordId").and_return("deleteResponse")
