@@ -22,6 +22,7 @@ module Databasedotcom
             self.send("#{field["name"]}=", field["defaultValueFormula"])
           end
         end
+
         self.attributes=(attrs)
       end
 
@@ -223,7 +224,7 @@ module Databasedotcom
       #    client.materialize("Car")
       #    Car.all    #=>   [#<Car @Id="1", ...>, #<Car @Id="2", ...>, #<Car @Id="3", ...>, ...]
       def self.all
-        self.client.query("SELECT #{self.field_list} FROM #{self.sobject_name}")
+        self.select(self.field_list, fetch_data: true)
       end
 
       # Returns a collection of instances of self that match the conditional +where_expr+, which is the WHERE part of a SOQL query.
@@ -241,14 +242,16 @@ module Databasedotcom
 
       # Find the first record. If the +where_expr+ argument is present, it must be the WHERE part of a SOQL query
       def self.first(where_expr=nil)
-        where = where_expr ? "WHERE #{where_expr} " : ""
-        self.client.query("SELECT #{self.field_list} FROM #{self.sobject_name} #{where}ORDER BY Id ASC LIMIT 1").first
+        result = self.order('Id ASC')
+        result = result.where(where_expr) if where_expr
+        result.limit('1').first
       end
 
       # Find the last record. If the +where_expr+ argument is present, it must be the WHERE part of a SOQL query
       def self.last(where_expr=nil)
-        where = where_expr ? "WHERE #{where_expr} " : ""
-        self.client.query("SELECT #{self.field_list} FROM #{self.sobject_name} #{where}ORDER BY Id DESC LIMIT 1").first
+        result = self.order('Id ASC')
+        result = result.where(where_expr) if where_expr
+        result.limit('1').last
       end
 
       #Delegates to Client.upsert with arguments self, +field+, +values+, and +attrs+
@@ -287,9 +290,10 @@ module Databasedotcom
             attrs_and_values_for_write[attr] = value unless hash_args
           end
 
-          limit_clause = method_name.to_s.include?('_all_by_') ? "" : " LIMIT 1"
+          limit_clause = method_name.to_s.include?('_all_by_') ? "" : "1"
 
-          results = self.client.query("SELECT #{self.field_list} FROM #{self.sobject_name} WHERE #{soql_conditions_for(attrs_and_values_for_find)}#{limit_clause}")
+          #results = self.client.query("SELECT #{self.field_list} FROM #{self.sobject_name} WHERE #{soql_conditions_for(attrs_and_values_for_find)} #{limit_clause}")
+          results = self.where(soql_conditions_for(attrs_and_values_for_find)).limit(limit_clause)
           results = limit_clause == "" ? results : results.first rescue nil
 
           if results.nil?
@@ -302,6 +306,8 @@ module Databasedotcom
           end
 
           results
+        elsif self.proxy.respond_to? method_name
+          self.proxy.send(method_name, *args, &block)
         else
           super
         end
@@ -371,6 +377,120 @@ module Databasedotcom
           arr
         end.join(" AND ")
       end
+
+      def self.proxy
+        self.kind_of?(Databasedotcom::Sobject::Sobject::Proxy) ? self : Proxy.new(self)
+      end
+
+      class Proxy
+
+        include Enumerable
+
+        def initialize klass
+          @klass = klass
+          @criteria = {}
+          @criteria[:selects], @criteria[:conditions], @criteria[:orders],@criteria[:limit] = [], {}, [], ''
+
+          @fetch_data = false
+        end
+
+        def select *fields
+          options = {}
+          if fields.last.kind_of? Hash
+            options = fields.pop
+            options.reverse_merge!(fetch_data: false) 
+          end
+
+          @criteria[:selects].concat fields
+
+          @fetch_data = true if options[:fetch_data]
+          self
+        end
+
+        def where *where_clauses
+          where_clauses.each do |where_clause|
+            case where_clause.class.name
+            when 'String'
+              @criteria[:conditions].merge!(string: where_clause)
+            when 'Hash'
+              @criteria[:conditions].merge!(where_clause)
+            end
+          end
+
+          @fetch_data = true
+          self
+        end
+
+        def order *order_clause
+          @criteria[:orders].concat order_clause
+          @fetch_data = true
+          self 
+        end
+
+        def limit limit
+          @criteria[:limit] = limit if limit.kind_of? String
+          self
+        end
+
+        def inspect
+          @fetch_data ? @klass.client.query(build_query) : self
+        end
+
+        def each(&block)
+          @klass.client.query(build_query).each do |record|
+            if block_given?
+              block.call record
+            else  
+              yield record
+            end
+          end
+        end
+
+        def to_a
+          @klass.client.query(build_query)
+        end
+
+        private
+
+        def fetch_array array
+          array.join(', ')
+        end
+
+        def fetch_hash hash
+          hash.map{|k,v| k == :string ? v : "#{k} = '#{v}'"}.join(' and ')
+        end
+
+        def fetch_select
+          if @criteria[:selects].present?
+            fetch_array @criteria[:selects]  
+          else
+            @klass.field_list
+          end
+        end
+
+        def fetch_where
+          fetch_hash @criteria[:conditions] unless @criteria[:conditions].empty?
+        end
+
+        def fetch_order
+          fetch_array @criteria[:orders] unless @criteria[:orders].empty?
+        end
+
+        def fetch_limit
+          @criteria[:limit] unless @criteria[:limit].empty?
+        end
+
+        def build_query
+          result = []
+          result << "select #{fetch_select}"
+          result << "from #{@klass.sobject_name}"
+          result << "where #{fetch_where}" if fetch_where.present?
+          result << "order by #{fetch_order}" if fetch_order.present?
+          result << "limit #{@criteria[:limit]}" if fetch_limit.present?
+          result.join(' ')
+        end
+      end
+
     end
   end
 end
