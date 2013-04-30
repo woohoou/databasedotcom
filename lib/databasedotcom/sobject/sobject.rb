@@ -22,7 +22,6 @@ module Databasedotcom
             self.send("#{field["name"]}=", field["defaultValueFormula"])
           end
         end
-
         self.attributes=(attrs)
       end
 
@@ -284,7 +283,6 @@ module Databasedotcom
 
           limit_clause = method_name.to_s.include?('_all_by_') ? "" : "1"
 
-          #results = self.client.query("SELECT #{self.field_list} FROM #{self.sobject_name} WHERE #{soql_conditions_for(attrs_and_values_for_find)} #{limit_clause}")
           results = self.where(soql_conditions_for(attrs_and_values_for_find)).limit(limit_clause)
           results = limit_clause == "" ? results : results.first rescue nil
 
