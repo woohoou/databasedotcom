@@ -388,7 +388,7 @@ module Databasedotcom
           options = {}
           if fields.last.kind_of? Hash
             options = fields.pop
-            options.reverse_merge!(fetch_data: false) 
+            options.reverse_merge!(:fetch_data => false) 
           end
 
           @criteria[:selects].concat fields
@@ -406,7 +406,7 @@ module Databasedotcom
           where_clauses.each do |where_clause|
             case where_clause.class.name
             when 'String'
-              @criteria[:conditions].merge!(string: where_clause)
+              @criteria[:conditions].merge!(:string => where_clause)
             when 'Hash'
               @criteria[:conditions].merge!(where_clause)
             end

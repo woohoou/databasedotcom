@@ -37,7 +37,7 @@ describe Databasedotcom::Sobject::Sobject do
 
         describe "getters and setters" do
           response["fields"].collect { |f| f["name"] }.each do |name|
-            it "creates a getter and setter for the #{name} attribute" do
+            it "creates a getter and: setter for the #{name} attribute" do
               @sobject.should respond_to(name.to_sym)
               @sobject.should respond_to("#{name}=".to_sym)
             end
@@ -190,8 +190,8 @@ describe Databasedotcom::Sobject::Sobject do
 
     describe ".where" do
       it "constructs and submits a SOQL query with method where(hash)" do
-        @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass WHERE Name = 'foo' AND Description = '1'").and_return("bar")
-        TestClass.where(Name: 'foo', Description: '1').to_s.should == "bar"
+        @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass WHERE Description = '1' AND Name = 'foo'").and_return("bar")
+        TestClass.where(:Description => '1', :Name => 'foo').to_s.should == "bar"
       end
     end
 
