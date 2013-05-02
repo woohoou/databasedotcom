@@ -37,7 +37,7 @@ describe Databasedotcom::Sobject::Sobject do
 
         describe "getters and setters" do
           response["fields"].collect { |f| f["name"] }.each do |name|
-            it "creates a getter and: setter for the #{name} attribute" do
+            it "creates a getter and setter for the #{name} attribute" do
               @sobject.should respond_to(name.to_sym)
               @sobject.should respond_to("#{name}=".to_sym)
             end
