@@ -233,9 +233,13 @@ module Databasedotcom
 
       # Find the first record. If the +where_expr+ argument is present, it must be the WHERE part of a SOQL query
       def self.first(where_expr=nil)
-        result = self.order('Id ASC')
-        result = result.where(where_expr) if where_expr
-        result.limit('1').first
+        if self.class.name == self.proxy.class.name
+          self.proxy.first
+        else
+          result = self.order('Id ASC')
+          result = result.where(where_expr) if where_expr
+          result.limit('1').first
+        end
       end
 
       # Find the last record. If the +where_expr+ argument is present, it must be the WHERE part of a SOQL query
@@ -257,7 +261,7 @@ module Databasedotcom
 
       # Get the total number of records
       def self.count
-        self.client.query("SELECT COUNT() FROM #{self.sobject_name}").total_size
+        self.select('COUNT()', :fetch_data => true).total_size
       end
 
       # Sobject objects support dynamic finders similar to ActiveRecord.
@@ -369,11 +373,10 @@ module Databasedotcom
       end
 
       def self.proxy
-        self.kind_of?(Databasedotcom::Sobject::Sobject::Proxy) ? self : Proxy.new(self)
+        self.kind_of?(Databasedotcom::Sobject::Sobject::Query) ? self : Query.new(self)
       end
 
-      class Proxy
-
+      class Query
         include Enumerable
 
         def initialize klass
@@ -382,13 +385,14 @@ module Databasedotcom
           @criteria[:selects], @criteria[:conditions], @criteria[:orders],@criteria[:limit] = [], {}, [], ''
 
           @fetch_data = false
+          @single_element = true
         end
 
         def select *fields
           options = {}
           if fields.last.kind_of? Hash
             options = fields.pop
-            options.reverse_merge!(fetch_data: false) 
+            options.reverse_merge!(:fetch_data => false) 
           end
 
           @criteria[:selects].concat fields
@@ -406,7 +410,7 @@ module Databasedotcom
           where_clauses.each do |where_clause|
             case where_clause.class.name
             when 'String'
-              @criteria[:conditions].merge!(string: where_clause)
+              @criteria[:conditions].merge!(:string => where_clause)
             when 'Hash'
               @criteria[:conditions].merge!(where_clause)
             end
@@ -424,29 +428,28 @@ module Databasedotcom
 
         def limit limit
           @criteria[:limit] = limit.to_s if limit.kind_of?(String) || limit.kind_of?(Integer)
+          @fetch_data = true
           self
         end
 
         def inspect
-          @fetch_data ? @klass.client.query(build_query) : self
+          execute_query
         end
 
         def each(&block)
-          @klass.client.query(build_query).each do |record|
-            if block_given?
-              block.call record
-            else  
-              yield record
-            end
-          end
+          execute_query('each', &block)
         end
 
         def to_a
-          @klass.client.query(build_query)
+          execute_query
         end
 
         def to_s
-          @klass.client.query(build_query)
+          execute_query
+        end
+
+        def method_missing(method_name, *args, &block)
+          self.to_a.send(method_name, *args, &block)
         end
 
         private
@@ -488,8 +491,22 @@ module Databasedotcom
           result << "LIMIT #{@criteria[:limit]}" if fetch_limit.present?
           result.join(' ')
         end
-      end
 
+        def execute_query type=nil, &block
+          case type
+          when 'each'
+            @klass.client.query(build_query).each do |record|
+              if block_given?
+                block.call record
+              else
+                yield record
+              end
+            end
+          else
+            @fetch_data ? @klass.client.query(build_query) : self
+          end
+        end
+      end
     end
   end
 end

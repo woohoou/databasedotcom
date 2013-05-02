@@ -176,7 +176,7 @@ describe Databasedotcom::Sobject::Sobject do
       it "constructs and submits a SOQL query with method select(array)" do
         fields = ['Name','Description']
         @client.should_receive(:query).with("SELECT #{fields.join(',')} FROM TestClass").and_return("bar")
-        TestClass.select(fields).to_s.should == "bar"
+        TestClass.select(fields).all.to_s.should == "bar"
       end
     end
 
@@ -184,7 +184,7 @@ describe Databasedotcom::Sobject::Sobject do
       it "constructs and submits a SOQL query with method select(args)" do
         fields = ['Name','Description']
         @client.should_receive(:query).with("SELECT #{fields.join(',')} FROM TestClass").and_return("bar")
-        TestClass.select('Name','Description').to_s.should == "bar"
+        TestClass.select('Name','Description').all.to_s.should == "bar"
       end
     end
 
