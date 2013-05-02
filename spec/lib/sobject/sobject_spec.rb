@@ -190,9 +190,9 @@ describe Databasedotcom::Sobject::Sobject do
 
     describe ".where" do
       it "constructs and submits a SOQL query with method where(hash)" do
-        hash = { :Name => 'foo', :Description => '1' }
+        hash = { :Name => 'foo', :Description => 'bar' }
         hash_query = hash.map{|k,v| k == :string ? v : "#{k} = '#{v}'"}.join(' AND ')
-        @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass WHERE #{hash_query}").and_return("bar")
+        @client.should_receive(:query).with(/(SELECT #{@field_names.join(',')} FROM TestClass WHERE ((Name = 'foo' AND Description = 'bar'){1}|(Description = 'bar' AND Name = 'foo'){1}))/).and_return("bar")
         TestClass.where(hash).to_s.should == "bar"
       end
     end
