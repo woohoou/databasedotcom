@@ -173,6 +173,12 @@ describe Databasedotcom::Sobject::Sobject do
     end
 
     describe ".select" do
+      it "constructs and submits a SOQL query with method select(string)" do
+        fields = ['Name','Description']
+        @client.should_receive(:query).with("SELECT #{fields.join(',')} FROM TestClass").and_return("bar")
+        TestClass.select('Name,Description').all.to_s.should == "bar"
+      end
+
       it "constructs and submits a SOQL query with method select(array)" do
         fields = ['Name','Description']
         @client.should_receive(:query).with("SELECT #{fields.join(',')} FROM TestClass").and_return("bar")
