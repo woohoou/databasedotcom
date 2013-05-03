@@ -178,9 +178,7 @@ describe Databasedotcom::Sobject::Sobject do
         @client.should_receive(:query).with("SELECT #{fields.join(',')} FROM TestClass").and_return("bar")
         TestClass.select(fields).all.to_s.should == "bar"
       end
-    end
 
-    describe ".select" do
       it "constructs and submits a SOQL query with method select(args)" do
         fields = ['Name','Description']
         @client.should_receive(:query).with("SELECT #{fields.join(',')} FROM TestClass").and_return("bar")
@@ -195,12 +193,15 @@ describe Databasedotcom::Sobject::Sobject do
         @client.should_receive(:query).with(/(SELECT #{@field_names.join(',')} FROM TestClass WHERE ((Name = 'foo' AND Description = 'bar'){1}|(Description = 'bar' AND Name = 'foo'){1}))/).and_return("bar")
         TestClass.where(hash).to_s.should == "bar"
       end
-    end
 
-    describe ".where" do
       it "constructs and submits a SOQL query with method where(args)" do
-        @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass WHERE Name = 'foo' AND Description = '1'").and_return("bar")
-        TestClass.where("Name = 'foo' AND Description = '1'").to_s.should == "bar"
+        @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass WHERE Name = 'foo' AND Description = 'bar'").and_return("bar")
+        TestClass.where("Name = 'foo' AND Description = 'bar'").to_s.should == "bar"
+      end
+
+      it "constructs and submits a SOQL query with multiple method where(args)" do
+        @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass WHERE Name = 'foo' AND Description = 'bar' AND Contact = 'foo' AND Address = 'bar'").and_return("bar")
+        TestClass.where("Name = 'foo' AND Description = 'bar'").where("Contact = 'foo' AND Address = 'bar'").to_s.should == "bar"
       end
     end
 
@@ -209,9 +210,7 @@ describe Databasedotcom::Sobject::Sobject do
         @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass ORDER BY Id DESC,Name ASC").and_return("bar")
         TestClass.order(['Id DESC','Name ASC']).to_s.should == "bar"
       end
-    end
 
-    describe ".order" do
       it "constructs and submits a SOQL query with method order(args)" do
         @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass ORDER BY Id DESC,Name ASC").and_return("bar")
         TestClass.order('Id DESC','Name ASC').to_s.should == "bar"
@@ -223,9 +222,7 @@ describe Databasedotcom::Sobject::Sobject do
         @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass LIMIT 1").and_return("bar")
         TestClass.limit(1).to_s.should == "bar"
       end
-    end
 
-    describe ".limit" do
       it "constructs and submits a SOQL query with method limit(string)" do
         @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass LIMIT 1").and_return("bar")
         TestClass.limit('1').to_s.should == "bar"
