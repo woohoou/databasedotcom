@@ -203,6 +203,11 @@ describe Databasedotcom::Sobject::Sobject do
         @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass WHERE Name = 'foo' AND Description = 'bar' AND Contact = 'foo' AND Address = 'bar'").and_return("bar")
         TestClass.where("Name = 'foo' AND Description = 'bar'").where("Contact = 'foo' AND Address = 'bar'").to_s.should == "bar"
       end
+
+      it "constructs and submits a SOQL query with multiple method where(args) with empty args" do
+        @client.should_receive(:query).with("SELECT #{@field_names.join(',')} FROM TestClass").and_return("bar")
+        TestClass.where('').to_s.should == "bar"
+      end
     end
 
     describe ".order" do

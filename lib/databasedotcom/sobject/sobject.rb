@@ -410,14 +410,16 @@ module Databasedotcom
           where_clauses.each do |where_clause|
             case where_clause.class.name
             when 'String'
-              @criteria[:conditions][:string] = '' if @criteria[:conditions][:string].nil?
-              if @criteria[:conditions][:string].present?
-                @criteria[:conditions][:string] << " AND #{where_clause}"
-              else
-                @criteria[:conditions][:string] << where_clause 
+              if where_clause.present?
+                @criteria[:conditions][:string] = '' if @criteria[:conditions][:string].nil?
+                if @criteria[:conditions][:string].present?
+                  @criteria[:conditions][:string] << " AND #{where_clause}"
+                else
+                  @criteria[:conditions][:string] << where_clause 
+                end
               end
             when 'Hash'
-              @criteria[:conditions].merge!(where_clause)
+              @criteria[:conditions].merge!(where_clause) if where_clause.present?
             end
           end
 
